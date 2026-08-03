@@ -1,11 +1,11 @@
 {
-  "generated": "2026-07-31T16:09:25.666341",
+  "generated": "2026-08-03T16:56:30.689406",
   "totalBills": 3757,
   "byStatus": {
-    "prefiled": 2256,
+    "prefiled": 2260,
     "floor": 104,
     "enacted": 450,
-    "committee": 921,
+    "committee": 917,
     "opposite_committee": 1,
     "passed_legislature": 1,
     "passed_origin": 22,
@@ -762,7 +762,7 @@
     "SGA": 344
   },
   "recentlyUpdated": 3757,
-  "updatedToday": 1091,
+  "updatedToday": 3757,
   "topSponsors": [
     [
       "()",
