@@ -19,6 +19,17 @@ async function visibleBillCount(page) {
   return page.locator('.bill-card').count();
 }
 
+/**
+ * Helper: true when the current session (per data/session.json) has not
+ * started yet. "At Governor" fixtures require real in-session bill data
+ * that cannot exist before the session convenes.
+ */
+async function isPreSession(page) {
+  const res = await page.request.get('/data/session.json');
+  const session = await res.json();
+  return new Date() < new Date(session.sessionStart);
+}
+
 test.describe('Filter tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -62,6 +73,7 @@ test.describe('Filter tests', () => {
   });
 
   test('status filter works -- click "At Governor" filter tag', async ({ page }) => {
+    test.skip(await isPreSession(page), 'requires 2027 in-session bill data (no governor-status bills yet)');
     // Open the filters panel
     await page.locator('#filterToggle').click();
     await expect(page.locator('#filtersPanel')).toBeVisible();

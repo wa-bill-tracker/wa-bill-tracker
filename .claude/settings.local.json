@@ -22,7 +22,14 @@
       "Bash(pip3 install:*)",
       "WebFetch(domain:leg.wa.gov)",
       "Bash(git status:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(rtk read *)",
+      "Bash(rtk ls *)",
+      "Bash(rtk grep *)",
+      "Bash(npx playwright *)",
+      "Bash(rtk find *)",
+      "Bash(lsof -ti:4200)",
+      "Bash(xargs cat)"
     ]
   }
 }

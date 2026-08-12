@@ -420,7 +420,7 @@ h1 {
     border-left: 3px solid var(--text-muted);
 }
 
-.tag.session-2025 {
+.tag.session-prior {
     background: #6c757d;
     color: white;
     font-size: 0.7rem;

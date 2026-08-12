@@ -167,9 +167,11 @@ class TestStatsJSONStructure(unittest.TestCase):
     
     def test_stats_json_has_required_fields(self):
         """Test stats.json has all required fields"""
-        if self.stats_data is None:
-            self.skipTest("No stats.json available")
-        
+        if not self.stats_data:
+            # Empty dict ({}) means stats.json was reset for a new biennium
+            # and awaits the next data fetch -- not yet populated.
+            self.skipTest("stats.json not yet populated for current biennium")
+
         required_fields = [
             'generated', 'totalBills', 'byStatus', 'byCommittee',
             'byPriority', 'byTopic'

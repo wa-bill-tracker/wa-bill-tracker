@@ -2,9 +2,10 @@ name: Fetch Bill Data
 
 on:
   schedule:
-    # Post-session: once per weekday at 6 AM Pacific (14:00 UTC), Mon-Fri
-    # Governor actions only happen on business days
-    - cron: '0 14 * * 1-5'
+    # Active session: 6 AM and 6 PM Pacific (14:00 and 02:00 UTC), daily
+    - cron: '0 14,2 * * *'
+    # Full refresh: Sundays at 2 AM Pacific (10:00 UTC)
+    - cron: '0 10 * * 0'
   workflow_dispatch:
     inputs:
       mode:
@@ -49,8 +50,8 @@ jobs:
           # Manual dispatch: use the selected mode
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "mode=${{ inputs.mode }}" >> "$GITHUB_OUTPUT"
-          # Monday: full refresh to catch any weekend changes
-          elif [ "$(date -u +%u)" = "1" ]; then
+          # Sunday: full refresh to catch any changes missed during the week
+          elif [ "$(date -u +%u)" = "7" ]; then
             echo "mode=full" >> "$GITHUB_OUTPUT"
           else
             echo "mode=incremental" >> "$GITHUB_OUTPUT"

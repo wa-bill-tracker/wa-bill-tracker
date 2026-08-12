@@ -25,7 +25,8 @@ from scripts.fetch_all_bills import (
     normalize_status,
     format_bill_number,
     get_leg_url,
-    NS
+    NS,
+    YEAR,
 )
 
 
@@ -309,7 +310,7 @@ class TestLegUrl(unittest.TestCase):
         url = get_leg_url(1001)
         self.assertIn("app.leg.wa.gov/billsummary", url)
         self.assertIn("BillNumber=1001", url)
-        self.assertIn("Year=2026", url)
+        self.assertIn(f"Year={YEAR}", url)
     
     def test_url_different_bill_numbers(self):
         """Test URL for different bill numbers"""

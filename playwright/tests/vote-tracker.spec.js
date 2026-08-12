@@ -24,6 +24,18 @@ async function visibleBillCount(page) {
 }
 
 /**
+ * Helper: true when the current session (per data/session.json) has not
+ * started yet. Governor/vote-tracker fixtures require real in-session bill
+ * data (bills that have reached "governor" or "enacted" status this
+ * biennium) which cannot exist before the session convenes.
+ */
+async function isPreSession(page) {
+  const res = await page.request.get('/data/session.json');
+  const session = await res.json();
+  return new Date() < new Date(session.sessionStart);
+}
+
+/**
  * Helper: filter to governor-status bills using the filter panel.
  * Returns after at least one bill card is visible with the filter applied.
  */
@@ -53,6 +65,7 @@ test.describe('Vote tracker display', () => {
    * tracker element is present and the old progress tracker is absent.
    */
   test('bill cards for governor-status bills show vote results instead of progress tracker', async ({ page }) => {
+    test.skip(await isPreSession(page), 'requires 2027 in-session bill data (no governor-status bills yet)');
     await filterToGovernorBills(page);
 
     const firstCard = page.locator('.bill-card').first();
@@ -79,6 +92,7 @@ test.describe('Vote tracker display', () => {
    * vote results, since bills must pass both chambers.
    */
   test('vote result shows house and senate sections', async ({ page }) => {
+    test.skip(await isPreSession(page), 'requires 2027 in-session bill data (no governor-status bills yet)');
     await filterToGovernorBills(page);
 
     const voteTracker = page.locator('.vote-tracker, .vote-results').first();
@@ -96,6 +110,7 @@ test.describe('Vote tracker display', () => {
    * This verifies that actual vote count numbers are rendered within the tracker.
    */
   test('vote counts are displayed as numbers', async ({ page }) => {
+    test.skip(await isPreSession(page), 'requires 2027 in-session bill data (no governor-status bills yet)');
     await filterToGovernorBills(page);
 
     const voteTracker = page.locator('.vote-tracker, .vote-results').first();
@@ -128,6 +143,7 @@ test.describe('Vote tracker display', () => {
    * "Signed", "Vetoed").
    */
   test('governor status row is present on governor-status bills', async ({ page }) => {
+    test.skip(await isPreSession(page), 'requires 2027 in-session bill data (no governor-status bills yet)');
     await filterToGovernorBills(page);
 
     const firstCard = page.locator('.bill-card').first();
@@ -157,15 +173,10 @@ test.describe('Vote tracker display', () => {
    * This confirms that the vote tracker only applies to passed bills.
    */
   test('bills still in committee keep the old progress tracker', async ({ page }) => {
-    // Enable inactive bills so we can see committee-stage bills
-    const inactiveToggle = page.locator('#showInactiveBills');
-    await inactiveToggle.check();
-
-    // Wait for the bill list to re-render with inactive bills included
-    await expect(async () => {
-      const count = await visibleBillCount(page);
-      expect(count).toBeGreaterThan(0);
-    }).toPass({ timeout: 15_000 });
+    test.skip(await isPreSession(page), 'requires 2027 in-session bill data (no committee-stage bills yet)');
+    // The "Show inactive bills" toggle was removed for the 2027-28 biennium
+    // (no prior-session carryover bills exist at biennium start). Committee-
+    // stage bills for the current session are visible by default.
 
     // Open the filters panel and select "In Committee" filter
     await page.locator('#filterToggle').click();

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Washington State Legislature Bill Fetcher
-Properly interfaces with the official WA Legislature SOAP API at wslwebservices.leg.wa.gov
-for the 2025-26 biennium.
+Properly interfaces with the official WA Legislature SOAP API at wslwebservices.leg.wa.gov.
+The active biennium is loaded at runtime from data/session.json.
 
 This script uses a two-step process:
 1. GetLegislationByYear to get the list of all bill IDs
@@ -695,14 +695,22 @@ def build_bill_dict(details: Dict, original_agency: str) -> Dict:
     introduced_date = details.get("introduced_date", "")[:10] if details.get("introduced_date") else ""
 
     # Determine which session this bill belongs to.
-    # Bills enacted/vetoed/failed in the 2025 long session are not active in 2026.
-    # Bills with "reintroduced and retained" carried over to 2026.
-    prior_year = str(SESSION.get("priorSession", {}).get("year", YEAR - 1))
-    terminal = status in ("enacted", "vetoed", "failed", "partial_veto")
-    reintroduced = "reintroduced" in history_line.lower()
-    if terminal and not reintroduced:
-        session = prior_year
+    # Within a single biennium (e.g. a long session followed by the next
+    # year's short session), bills enacted/vetoed/failed in the prior year
+    # are not active this year, unless "reintroduced and retained".
+    # At the start of a new biennium there is no carryover -- every bill
+    # belongs to the current year.
+    prior_year = SESSION.get("priorSession", {}).get("year")
+    if prior_year and str(YEAR - 1) == str(prior_year):
+        # Same biennium -- check for carryovers
+        terminal = status in ("enacted", "vetoed", "failed", "partial_veto")
+        reintroduced = "reintroduced" in history_line.lower()
+        if terminal and not reintroduced:
+            session = str(prior_year)
+        else:
+            session = str(YEAR)
     else:
+        # New biennium -- no carryovers, all bills belong to current year
         session = str(YEAR)
 
     bill_dict = {
@@ -929,9 +937,15 @@ def fetch_all_bills() -> List[Dict]:
             else:
                 all_bill_info[key]["prefiled"] = True
     
-    # Also try previous year for carryover bills
-    prev_year_bills = get_legislation_list_by_year(YEAR - 1)
-    logger.info(f"GetLegislationByYear ({YEAR - 1}) returned {len(prev_year_bills)} bills")
+    # Also try previous year for carryover bills, but only within the same
+    # biennium -- a new biennium has no carryovers.
+    prior_biennium = SESSION.get("priorSession", {}).get("biennium")
+    if prior_biennium == BIENNIUM:
+        prev_year_bills = get_legislation_list_by_year(YEAR - 1)
+        logger.info(f"GetLegislationByYear ({YEAR - 1}) returned {len(prev_year_bills)} bills")
+    else:
+        prev_year_bills = []
+        logger.info(f"New biennium ({BIENNIUM}) -- skipping prior-year carryover fetch")
     
     for bill in prev_year_bills:
         key = bill.get("bill_number") or bill.get("bill_id")
