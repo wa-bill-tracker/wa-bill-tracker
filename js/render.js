@@ -126,7 +126,7 @@ export function renderCutoffFailedBills() {
 
     // Get all current session bills that missed a cutoff
     const cutoffFailedBills = APP_STATE.bills.filter(bill => {
-        if (bill.session === '2025') return false;
+        if (bill.session === String(APP_CONFIG.priorSession?.year)) return false;
         return getBillCutoffStatus(bill) !== null;
     });
 
@@ -238,10 +238,11 @@ export function updateCutoffExplainerVisibility() {
         }
 
         if (flyout) {
-            const bills2026 = APP_STATE.bills.filter(b => b.session !== '2025');
-            const governorCount = bills2026.filter(b => b.status === 'governor').length;
-            const passedLegCount = bills2026.filter(b => b.status === 'passed_legislature').length;
-            const enactedCount = bills2026.filter(b => b.status === 'enacted').length;
+            const priorYear = String(APP_CONFIG.priorSession?.year);
+            const currentSessionBills = APP_STATE.bills.filter(b => b.session !== priorYear);
+            const governorCount = currentSessionBills.filter(b => b.status === 'governor').length;
+            const passedLegCount = currentSessionBills.filter(b => b.status === 'passed_legislature').length;
+            const enactedCount = currentSessionBills.filter(b => b.status === 'enacted').length;
 
             flyout.innerHTML =
                 '<h4>Session Status</h4>' +
@@ -284,7 +285,7 @@ export function updateCutoffExplainerVisibility() {
     });
 
     const hasBillsAtRisk = APP_STATE.bills.some(bill => {
-        if (bill.session === '2025') return false;
+        if (bill.session === String(APP_CONFIG.priorSession?.year)) return false;
         const status = bill.status;
         return APP_CONFIG.cutoffDates.some(cutoff => {
             const cutoffDate = new Date(cutoff.date + 'T00:00:00');
@@ -488,9 +489,10 @@ export function createBillCard(bill) {
     const isTracked = APP_STATE.trackedBills.has(bill.id);
     const hasNotes = APP_STATE.userNotes[bill.id] && APP_STATE.userNotes[bill.id].length > 0;
     const hasHearings = bill.hearings && bill.hearings.length > 0;
-    const isFrom2025 = bill.session === '2025';
+    const priorSessionYear = APP_CONFIG.priorSession?.year;
+    const isFromPriorSession = bill.session === String(priorSessionYear);
     const cutoffStatus = getBillCutoffStatus(bill);
-    const isInactive = isFrom2025 || cutoffStatus;
+    const isInactive = isFromPriorSession || cutoffStatus;
 
     let latestNote = '';
     if (hasNotes) {
@@ -535,7 +537,7 @@ export function createBillCard(bill) {
                     <span class="tag status-${escapeHTML(bill.status)}">${escapeHTML(STATUS_LABELS[bill.status] || bill.status)}</span>
                     <span class="tag priority-${escapeHTML(bill.priority)}">${escapeHTML(bill.priority)} priority</span>
                     <span class="tag">${escapeHTML(bill.topic)}</span>
-                    ${isFrom2025 ? '<span class="tag session-2025">2025 Session</span>' : ''}
+                    ${isFromPriorSession ? '<span class="tag session-prior">' + escapeHTML(String(priorSessionYear)) + ' Session</span>' : ''}
                     ${cutoffStatus ? '<span class="tag cutoff-failed">Missed: ' + escapeHTML(cutoffStatus) + '</span>' : ''}
                 </div>
             </div>
@@ -708,16 +710,45 @@ export function renderHearingsStats() {
 
 export function renderSessionStats() {
     const now = new Date();
+    const sessionStarted = now >= APP_CONFIG.sessionStart;
     const daysLeft = Math.ceil((APP_CONFIG.sessionEnd - now) / (1000 * 60 * 60 * 24));
     const totalDays = Math.ceil((APP_CONFIG.sessionEnd - APP_CONFIG.sessionStart) / (1000 * 60 * 60 * 24));
     const sessionEnded = daysLeft <= 0;
 
-    const bills2026 = APP_STATE.bills.filter(b => b.session !== '2025');
-    const enactedCount = bills2026.filter(b => b.status === 'enacted').length;
-    const governorCount = bills2026.filter(b => b.status === 'governor').length;
-    const passedLegCount = bills2026.filter(b => b.status === 'passed_legislature').length;
+    const currentSessionBills = APP_STATE.bills.filter(b => b.session !== String(APP_CONFIG.priorSession?.year));
+    const enactedCount = currentSessionBills.filter(b => b.status === 'enacted').length;
+    const governorCount = currentSessionBills.filter(b => b.status === 'governor').length;
+    const passedLegCount = currentSessionBills.filter(b => b.status === 'passed_legislature').length;
     const awaitingGovernor = governorCount + passedLegCount;
-    const vetoedCount = bills2026.filter(b => b.status === 'vetoed' || b.status === 'partial_veto').length;
+    const vetoedCount = currentSessionBills.filter(b => b.status === 'vetoed' || b.status === 'partial_veto').length;
+
+    if (!sessionStarted) {
+        // PRE-SESSION: show countdown to session start
+        const daysUntil = Math.ceil((APP_CONFIG.sessionStart - now) / (1000 * 60 * 60 * 24));
+        const prefiledCount = APP_STATE.bills.filter(b => b.status === 'prefiled').length;
+        const startDateStr = APP_CONFIG.sessionStart.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        return `
+            <h2>Upcoming: ${APP_CONFIG.year} Session</h2>
+            <div class="stats-list">
+                <div class="stats-item">
+                    <span class="stats-item-label">Session Begins</span>
+                    <span class="stats-item-value">${startDateStr}</span>
+                </div>
+                <div class="stats-item">
+                    <span class="stats-item-label">Days Until Session</span>
+                    <span class="stats-item-value">${Math.max(0, daysUntil)}</span>
+                </div>
+                <div class="stats-item">
+                    <span class="stats-item-label">Session Type</span>
+                    <span class="stats-item-value">${APP_CONFIG.sessionType === 'long' ? 'Long (105 days)' : 'Short (60 days)'}</span>
+                </div>
+                <div class="stats-item">
+                    <span class="stats-item-label">Prefiled Bills</span>
+                    <span class="stats-item-value">${prefiledCount}</span>
+                </div>
+            </div>
+        `;
+    }
 
     if (sessionEnded) {
         const endDateStr = APP_CONFIG.sessionEnd.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
@@ -754,7 +785,7 @@ export function renderSessionStats() {
 
     const daysPassed = totalDays - daysLeft;
     const percentComplete = Math.round((daysPassed / totalDays) * 100);
-    const activeBills = bills2026.filter(b => !getBillCutoffStatus(b)).length;
+    const activeBills = currentSessionBills.filter(b => !getBillCutoffStatus(b)).length;
 
     const next = getNextCutoff();
     const nextCutoffHtml = next
@@ -841,13 +872,22 @@ export function updateStats(filteredBills) {
     document.getElementById('newToday').textContent = newToday;
 
     const now = new Date();
+    const sessionStarted = now >= APP_CONFIG.sessionStart;
     const daysLeft = Math.ceil((APP_CONFIG.sessionEnd - now) / (1000 * 60 * 60 * 24));
     const sessionEnded = daysLeft <= 0;
 
-    if (sessionEnded) {
-        const allBills2026 = APP_STATE.bills.filter(b => b.session !== '2025');
-        const atGovernor = allBills2026.filter(b => b.status === 'governor' || b.status === 'passed_legislature').length;
-        const enacted = allBills2026.filter(b => b.status === 'enacted').length;
+    if (!sessionStarted) {
+        // PRE-SESSION: show countdown and prefiled bill count
+        const daysUntil = Math.ceil((APP_CONFIG.sessionStart - now) / (1000 * 60 * 60 * 24));
+        const prefiledCount = APP_STATE.bills.filter(b => b.status === 'prefiled').length;
+        document.getElementById('hearingsWeek').textContent = prefiledCount;
+        document.getElementById('hearingsLabel').textContent = 'Prefiled Bills';
+        document.getElementById('daysLeft').textContent = Math.max(0, daysUntil);
+        document.getElementById('daysLeftLabel').textContent = 'Days Until Session';
+    } else if (sessionEnded) {
+        const allCurrentSessionBills = APP_STATE.bills.filter(b => b.session !== String(APP_CONFIG.priorSession?.year));
+        const atGovernor = allCurrentSessionBills.filter(b => b.status === 'governor' || b.status === 'passed_legislature').length;
+        const enacted = allCurrentSessionBills.filter(b => b.status === 'enacted').length;
         document.getElementById('hearingsWeek').textContent = atGovernor;
         document.getElementById('hearingsLabel').textContent = 'Awaiting Governor';
         document.getElementById('daysLeft').textContent = enacted;

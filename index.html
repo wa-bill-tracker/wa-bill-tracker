@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WA Legislative Tracker 2026 | Track Washington State Bills</title>
-    <meta name="description" content="Track and monitor Washington State legislative bills for the 2026 session. Free, open-source bill tracking with automatic updates.">
+    <title>WA Legislative Tracker 2027 | Track Washington State Bills</title>
+    <meta name="description" content="Track and monitor Washington State legislative bills for the 2027 session. Free, open-source bill tracking with automatic updates.">
 
     <!-- Open Graph Meta Tags for Sharing -->
-    <meta property="og:title" content="WA Legislative Tracker 2026">
+    <meta property="og:title" content="WA Legislative Tracker 2027">
     <meta property="og:description" content="Track Washington State bills, initiatives, and referendums">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://wa-bill-tracker.org">
@@ -15,7 +15,9 @@
     <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'none';">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
+    <!-- X-Frame-Options is not honored via <meta> per the HTML spec and logs a
+         console warning in Chromium; clickjacking protection is enforced via
+         the real HTTP header set by GitHub Pages/Caddy. See issue #76. -->
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
 
@@ -25,7 +27,7 @@
     <!-- Header -->
     <header>
         <div class="header-content">
-            <h1 id="siteTitle">WA Legislative Tracker 2026</h1>
+            <h1 id="siteTitle">WA Legislative Tracker 2027</h1>
             <div class="sync-info">
                 <div class="sync-status" id="syncStatus">
                     <span class="sync-dot"></span>
@@ -50,7 +52,7 @@
     <!-- Page Title -->
     <div class="page-title">
         <h2 id="pageTitle">All Bills</h2>
-        <p id="pageDescription">Showing all Washington State legislative bills for the 2026 session</p>
+        <p id="pageDescription">Showing all Washington State legislative bills for the 2027 session</p>
     </div>
 
     <!-- Main Container -->
@@ -101,43 +103,11 @@
                         These deadlines decide when bills must reach certain stages to stay alive.
                     </p>
 
-                    <h4>Cutoffs that have passed</h4>
+                    <h4>2027 cutoff calendar not yet available</h4>
                     <p>
-                        <strong>Feb 4 — Policy Committee (Origin):</strong> Bills still waiting for policy committee review
-                        in their starting chamber missed this deadline.
-                    </p>
-                    <p>
-                        <strong>Feb 9 — Fiscal Committee (Origin):</strong> Bills stuck in a fiscal committee
-                        in their house of origin were cut off.
-                    </p>
-                    <p>
-                        <strong>Feb 17 — House of Origin:</strong> Bills that hadn't passed a full floor vote
-                        in their starting chamber were cut off.
-                    </p>
-                    <p>
-                        <strong>Feb 25 — Policy Committee (Opposite):</strong> Bills that passed their house of origin
-                        but hadn't cleared a policy committee in the opposite chamber were cut off.
-                    </p>
-                    <p>
-                        <strong>Mar 4 — Fiscal Committee (Opposite):</strong> Bills stuck in a fiscal committee
-                        in the opposite chamber were cut off.
-                    </p>
-                    <p>
-                        <strong>Mar 6 — Opposite House:</strong> Bills that hadn't passed a floor vote
-                        in the opposite chamber were cut off. Only bills that have passed both chambers remain active.
-                    </p>
-
-                    <h4>What does this mean?</h4>
-                    <ul>
-                        <li><strong>Active bills</strong> have passed both chambers and are awaiting final action (conference, governor's signature, etc.).</li>
-                        <li><strong>Inactive bills</strong> missed one of these cutoffs and won't become law this session.</li>
-                        <li>Scroll down to see which bills missed each cutoff and are no longer active.</li>
-                    </ul>
-
-                    <h4>What's next?</h4>
-                    <p>
-                        The final deadline is <strong>Sine Die on March 12th</strong> — the last day of the 2026 regular session.
-                        All remaining legislative action must be completed by then.
+                        The official 2027 legislative cutoff calendar is published by the Washington State
+                        Legislature approximately one month before session convenes. Cutoff tracking will
+                        appear here once that calendar is released.
                     </p>
                 </div>
             </div>
@@ -154,9 +124,6 @@
                 <button type="button" class="filter-btn" id="trackedToggle">
                     My Tracked
                 </button>
-                <label class="inactive-toggle" title="Show bills from 2025 session and bills that missed cutoff deadlines">
-                    <input type="checkbox" id="showInactiveBills"> Show inactive bills
-                </label>
                 <button type="button" class="btn-primary" id="refreshBtn">
                     Refresh
                 </button>
@@ -231,7 +198,7 @@
                 </button>
                 <div class="cutoff-failed-content" id="cutoffFailedContent">
                     <p class="cutoff-failed-explanation">
-                        These bills did not advance past required stages before legislative deadlines and are no longer active for the 2026 session.
+                        These bills did not advance past required stages before legislative deadlines and are no longer active for the current session.
                         While procedural revival is theoretically possible until Sine Die, these bills are effectively dead.
                     </p>
                     <div id="cutoffFailedBills"></div>
@@ -305,14 +272,14 @@
     <!-- Footer -->
     <footer>
         <p>
-            <strong id="footerYear">WA Legislative Tracker 2026</strong><br>
+            <strong id="footerYear">WA Legislative Tracker 2027</strong><br>
             Open source bill tracking for Washington State<br>
             <a href="https://github.com/jeff-is-working/wa-bill-tracker" target="_blank" rel="noopener noreferrer">GitHub Repository</a> |
             <a href="https://app.leg.wa.gov/" target="_blank" rel="noopener noreferrer">Official WA Legislature Site</a> |
             <a href="https://github.com/jeff-is-working/wa-bill-tracker/issues" target="_blank" rel="noopener noreferrer">Report an Issue</a> |
             <a href="mailto:feedback@wa-bill-tracker.org">Send Feedback</a><br>
             <small>Data updated automatically via GitHub Actions</small><br>
-            <small>This application produced by Circle6Systems 2026. Not affiliated with or supported by any government entity.</small>
+            <small>This application produced by Circle6Systems 2027. Not affiliated with or supported by any government entity.</small>
         </p>
     </footer>
 

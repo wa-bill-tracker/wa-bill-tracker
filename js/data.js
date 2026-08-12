@@ -161,7 +161,7 @@ export function endOfDayLocal(dateStr) {
 // Returns the cutoff label if the bill missed a deadline, or null if still active.
 export function getBillCutoffStatus(bill) {
     // Only applies to current session bills
-    if (bill.session === '2025') return null;
+    if (bill.session === String(APP_CONFIG.priorSession?.year)) return null;
     // Already terminal -- not a cutoff failure
     if (['enacted', 'vetoed', 'failed', 'partial_veto', 'governor', 'passed_legislature'].includes(bill.status)) return null;
 
@@ -203,11 +203,12 @@ export function filterBills() {
         totalBills: APP_STATE.bills.length
     });
 
-    // Filter out inactive bills (2025 session + cutoff failures) unless toggle is on
+    // Filter out inactive bills (prior-session carryovers + cutoff failures) unless toggle is on
     if (!APP_STATE.filters.showInactiveBills) {
+        const priorYear = String(APP_CONFIG.priorSession?.year || '');
         filtered = filtered.filter(bill => {
-            // Hide 2025 session bills
-            if (bill.session === '2025') return false;
+            // Hide prior-session bills (same-biennium carryovers)
+            if (priorYear && bill.session === priorYear) return false;
             // Hide bills that missed a cutoff deadline
             if (getBillCutoffStatus(bill)) return false;
             return true;

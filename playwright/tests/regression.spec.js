@@ -19,6 +19,17 @@ async function waitForBills(page) {
   await page.locator('.bill-card').first().waitFor({ state: 'visible', timeout: 30_000 });
 }
 
+/**
+ * Helper: true when the current session (per data/session.json) has not
+ * started yet. Post-session/governor fixtures require real in-session bill
+ * data that cannot exist before the session convenes.
+ */
+async function isPreSession(page) {
+  const res = await page.request.get('/data/session.json');
+  const session = await res.json();
+  return new Date() < new Date(session.sessionStart);
+}
+
 test.describe('Post-session regression tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -26,6 +37,7 @@ test.describe('Post-session regression tests', () => {
   });
 
   test('post-session governor stats are visible in header stat cards', async ({ page }) => {
+    test.skip(await isPreSession(page), 'requires the 2027 session to have ended (post-session UI does not apply pre-session)');
     // After session end, the app relabels the stat cards:
     //   "Hearings This Week" -> "Awaiting Governor"
     //   "Days Remaining" -> "Signed Into Law"
@@ -70,6 +82,7 @@ test.describe('Post-session regression tests', () => {
   });
 
   test('governor status bills are visible in default view', async ({ page }) => {
+    test.skip(await isPreSession(page), 'requires 2027 in-session bill data (no governor-status bills yet)');
     // Open the filters panel and select "At Governor"
     await page.locator('#filterToggle').click();
     await expect(page.locator('#filtersPanel')).toBeVisible();
@@ -84,11 +97,11 @@ test.describe('Post-session regression tests', () => {
     }).toPass({ timeout: 15_000 });
   });
 
-  test('enacted bills are not hidden by inactive bill toggle being off', async ({ page }) => {
-    // By default, "Show inactive bills" is unchecked.
-    // Enacted bills should still be visible because they passed all cutoffs.
-    const inactiveToggle = page.locator('#showInactiveBills');
-    await expect(inactiveToggle).not.toBeChecked();
+  test('enacted bills are not hidden by cutoff filtering in the default view', async ({ page }) => {
+    // The "Show inactive bills" toggle was removed for the 2027-28 biennium
+    // (no prior-session carryover bills exist at biennium start).
+    // Enacted bills should still be visible by default because they passed
+    // all cutoffs.
 
     // Filter to enacted bills
     await page.locator('#filterToggle').click();

@@ -1,21 +1,13 @@
 {
-  "year": 2026,
-  "biennium": "2025-26",
-  "sessionType": "short",
-  "sessionStart": "2026-01-12",
-  "sessionEnd": "2026-03-12",
-  "siteTitle": "WA Legislative Tracker 2026",
-  "cutoffDates": [
-    { "date": "2026-02-04", "label": "Policy Committee (Origin)", "failsBefore": ["prefiled", "introduced"] },
-    { "date": "2026-02-09", "label": "Fiscal Committee (Origin)", "failsBefore": ["prefiled", "introduced", "committee"] },
-    { "date": "2026-02-17", "label": "House of Origin", "failsBefore": ["prefiled", "introduced", "committee", "floor"] },
-    { "date": "2026-02-25", "label": "Policy Committee (Opposite)", "failsBefore": ["prefiled", "introduced", "committee", "floor", "passed_origin"] },
-    { "date": "2026-03-04", "label": "Fiscal Committee (Opposite)", "failsBefore": ["prefiled", "introduced", "committee", "floor", "passed_origin", "opposite_committee"] },
-    { "date": "2026-03-06", "label": "Opposite House", "failsBefore": ["prefiled", "introduced", "committee", "floor", "passed_origin", "opposite_committee", "opposite_floor"] },
-    { "date": "2026-03-12", "label": "Sine Die", "failsBefore": ["prefiled", "introduced", "committee", "floor", "passed_origin", "opposite_committee", "opposite_floor"] }
-  ],
+  "year": 2027,
+  "biennium": "2027-28",
+  "sessionType": "long",
+  "sessionStart": "2027-01-11",
+  "sessionEnd": "2027-04-25",
+  "siteTitle": "WA Legislative Tracker 2027",
+  "cutoffDates": [],
   "priorSession": {
-    "year": 2025,
+    "year": 2026,
     "biennium": "2025-26"
   }
 }
