@@ -11,3 +11,6 @@ CLAUDE.md
 claude.md
 .claude/
 package-lock.json
+
+# Per-machine Claude Code settings (untracked, ADO #2685)
+.claude/settings.local.json
