@@ -700,8 +700,11 @@ def build_bill_dict(details: Dict, original_agency: str) -> Dict:
     # are not active this year, unless "reintroduced and retained".
     # At the start of a new biennium there is no carryover -- every bill
     # belongs to the current year.
-    prior_year = SESSION.get("priorSession", {}).get("year")
-    if prior_year and str(YEAR - 1) == str(prior_year):
+    prior_session = SESSION.get("priorSession", {})
+    prior_year = prior_session.get("year")
+    # Compare biennium labels, not years: 2027 follows 2026 but they belong
+    # to different biennia (ADO #3074).
+    if prior_year and prior_session.get("biennium") == BIENNIUM:
         # Same biennium -- check for carryovers
         terminal = status in ("enacted", "vetoed", "failed", "partial_veto")
         reintroduced = "reintroduced" in history_line.lower()
