@@ -88,13 +88,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 // --- Development banner (ADO #3117) ---
 // Shown only while APP_CONFIG.developmentBanner (session.json) is true and the
 // visitor has not dismissed it. Dismissal is stored per session year.
+//
+// Dismissal is kept in both a cookie and localStorage under the same key.
+// WebKit rejects Secure cookies on http://localhost, so the cookie alone would
+// not persist there; either copy counts as dismissed.
+function isBannerDismissed(key) {
+    if (String(CookieManager.get(key)) === '1') return true;
+    try {
+        return localStorage.getItem(key) === '1';
+    } catch (e) {
+        return false;
+    }
+}
+
+function rememberBannerDismissed(key) {
+    CookieManager.set(key, '1', 365);
+    try {
+        localStorage.setItem(key, '1');
+    } catch (e) {
+        console.warn('Could not store banner dismissal in localStorage:', e);
+    }
+}
+
 function setupDevBanner() {
     const banner = document.getElementById('devBanner');
     const dismissBtn = document.getElementById('devBannerDismiss');
     if (!banner || !dismissBtn) return;
 
     const key = getStorageKey('dev_banner_dismissed');
-    if (!APP_CONFIG.developmentBanner || String(CookieManager.get(key)) === '1') {
+    if (!APP_CONFIG.developmentBanner || isBannerDismissed(key)) {
         banner.hidden = true;
         return;
     }
@@ -102,7 +124,7 @@ function setupDevBanner() {
     banner.hidden = false;
     dismissBtn.addEventListener('click', () => {
         banner.hidden = true;
-        CookieManager.set(key, '1', 365);
+        rememberBannerDismissed(key);
         // The banner (and the button that had focus) is gone; move focus to
         // the page title so keyboard and screen reader users keep their place.
         const title = document.getElementById('siteTitle');

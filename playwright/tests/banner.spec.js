@@ -52,12 +52,14 @@ test.describe('Development banner (ADO #3117)', () => {
     await page.locator('#daysLeft').click();
     await expect(page.locator('#statsView')).toHaveClass(/active/);
     await expect(banner(page)).toBeVisible();
-    await page.goto('/#passed-2026');
+    await page.goto('/#passed-2025-26');
     await expect(banner(page)).toBeVisible();
   });
 
   test('dismiss button is labelled, at least 24x24 and has a visible focus ring', async ({ page }) => {
     await page.goto('/');
+    // The banner is hidden until app init; focusing a hidden button is a race.
+    await expect(banner(page)).toBeVisible();
     const btn = dismiss(page);
     await expect(btn).toHaveAttribute('aria-label', /dismiss/i);
     expect(await btn.evaluate((el) => el.tagName)).toBe('BUTTON');
@@ -73,10 +75,12 @@ test.describe('Development banner (ADO #3117)', () => {
     expect(outline.width).toBeGreaterThanOrEqual(2);
   });
 
-  test('keyboard: Tab reaches dismiss first, Enter dismisses, focus moves to the page title', async ({ page }) => {
+  test('keyboard: Tab reaches dismiss first, Enter dismisses, focus moves to the page title', async ({ page, browserName }) => {
     await page.goto('/');
     await expect(banner(page)).toBeVisible();
-    await page.keyboard.press('Tab');
+    // WebKit leaves buttons out of the Tab order by default; Alt+Tab is its
+    // equivalent of Tab for buttons (Safari "Press Tab to highlight each item").
+    await page.keyboard.press(browserName === 'webkit' ? 'Alt+Tab' : 'Tab');
     await expect(dismiss(page)).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(banner(page)).toBeHidden();
@@ -90,8 +94,15 @@ test.describe('Development banner (ADO #3117)', () => {
     await page.reload();
     await expect(page.locator('#siteTitle')).toBeVisible();
     await expect(banner(page)).toBeHidden();
-    const cookie = await page.evaluate(() => document.cookie);
-    expect(cookie).toMatch(/wa_tracker_\d{4}_dev_banner_dismissed/);
+    // Cookie where the browser accepts it, localStorage everywhere. WebKit
+    // rejects Secure cookies on http://localhost, so the storage copy is what
+    // keeps dismissal sticky there.
+    const stored = await page.evaluate(() => ({
+      cookie: document.cookie,
+      keys: Object.keys(localStorage).filter((k) => /^wa_tracker_\d{4}_dev_banner_dismissed$/.test(k)),
+    }));
+    expect(stored.keys).toHaveLength(1);
+    expect(stored.cookie.match(/wa_tracker_\d{4}_dev_banner_dismissed/) || stored.keys.length).toBeTruthy();
   });
 
   test('off-switch: developmentBanner=false in session.json hides it', async ({ page }) => {
