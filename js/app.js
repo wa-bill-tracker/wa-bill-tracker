@@ -45,6 +45,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         footerYear.textContent = config.siteName;
     }
 
+    setupDevBanner();
+
     // Load bill data
     await loadBillsData();
 
@@ -80,6 +82,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     _checkForSharedBill();
 });
+
+// --- Development banner (ADO #3117) ---
+// Shown only while APP_CONFIG.developmentBanner (session.json) is true and the
+// visitor has not dismissed it. Dismissal is stored per session year.
+function setupDevBanner() {
+    const banner = document.getElementById('devBanner');
+    const dismissBtn = document.getElementById('devBannerDismiss');
+    if (!banner || !dismissBtn) return;
+
+    const key = getStorageKey('dev_banner_dismissed');
+    if (!APP_CONFIG.developmentBanner || String(CookieManager.get(key)) === '1') {
+        banner.hidden = true;
+        return;
+    }
+
+    banner.hidden = false;
+    dismissBtn.addEventListener('click', () => {
+        banner.hidden = true;
+        CookieManager.set(key, '1', 365);
+        // The banner (and the button that had focus) is gone; move focus to
+        // the page title so keyboard and screen reader users keep their place.
+        const title = document.getElementById('siteTitle');
+        if (title) {
+            title.setAttribute('tabindex', '-1');
+            title.focus();
+        }
+    });
+}
 
 // --- Wrapper for loadBillData that passes showToast and calls post-load hooks ---
 async function loadBillsData() {

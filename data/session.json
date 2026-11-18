@@ -4,6 +4,7 @@
   "sessionType": "long",
   "sessionStart": "2027-01-11",
   "sessionEnd": "2027-04-25",
+  "developmentBanner": true,
   "siteTitle": "WA Legislative Tracker 2027",
   "cutoffDates": [
     { "date": "2027-02-19", "label": "Policy Committee (Origin)", "failsBefore": ["prefiled", "introduced"] },

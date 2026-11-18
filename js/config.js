@@ -68,6 +68,9 @@ export async function loadConfig() {
             label: c.label,
             failsBefore: c.failsBefore
         })),
+        // Single off-switch for the development banner (ADO #3117): set
+        // "developmentBanner" to false in data/session.json at cutover.
+        developmentBanner: session.developmentBanner === true,
         priorSession: session.priorSession || {},
         billTypes: typesWithYear
     };

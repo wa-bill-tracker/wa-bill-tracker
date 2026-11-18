@@ -2059,3 +2059,68 @@ footer a:hover {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* ==========================================================================
+   Development banner (ADO #3117)
+   Cream surface with navy text (contrast ~12:1). Dismiss target is 44x44.
+   No motion, so nothing to disable for prefers-reduced-motion.
+   ========================================================================== */
+.dev-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem 0.75rem 2rem;
+    background: var(--c6s-white);
+    color: var(--c6s-navy);
+    border-bottom: 4px solid var(--c6s-accent-bg);
+    animation: none;
+    transition: none;
+}
+
+.dev-banner[hidden] {
+    display: none;
+}
+
+.dev-banner-text {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.dev-banner-dismiss {
+    flex: 0 0 auto;
+    min-width: 44px;
+    min-height: 44px;
+    background: transparent;
+    color: var(--c6s-navy);
+    border: 2px solid var(--c6s-navy);
+    border-radius: 8px;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.dev-banner-dismiss:hover {
+    background: var(--c6s-navy);
+    color: var(--c6s-white);
+}
+
+.dev-banner-dismiss:focus-visible {
+    outline: 3px solid var(--c6s-navy);
+    outline-offset: 2px;
+}
+
+/* Dark header surface: use the light token so the ring is visible. */
+.nav-tab:focus-visible {
+    outline: 3px solid var(--c6s-white);
+    outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+    .dev-banner {
+        padding-left: 1rem;
+    }
+}

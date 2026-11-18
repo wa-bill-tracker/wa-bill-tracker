@@ -24,6 +24,15 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Development banner (ADO #3117). Hidden by default; js/app.js reveals it
+         only while "developmentBanner" is true in data/session.json and the
+         visitor has not dismissed it. Placed ahead of the page header so it precedes all
+         page content in DOM order. Cutover: set developmentBanner to false. -->
+    <section class="dev-banner" id="devBanner" aria-label="Site upgrade notice" hidden>
+        <p class="dev-banner-text"><strong>We're upgrading WA Bill Tracker.</strong> A new version with deeper bill, legislator and law (RCW) context launches before the 2027 session begins January 11. This site stays fully available until then.</p>
+        <button type="button" class="dev-banner-dismiss" id="devBannerDismiss" aria-label="Dismiss site upgrade notice"><span aria-hidden="true">&times;</span></button>
+    </section>
+
     <!-- Header -->
     <header>
         <div class="header-content">
