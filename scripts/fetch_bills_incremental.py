@@ -31,6 +31,7 @@ from scripts.fetch_all_bills import (
     BIENNIUM,
     DATA_DIR,
     REQUEST_DELAY,
+    SESSION,
     YEAR,
     build_bill_dict,
     compute_content_hash,
@@ -114,11 +115,17 @@ def find_new_bill_numbers(manifest: dict) -> list:
     logger.info(f"GetLegislationByYear({YEAR}): {len(year_bills)} bills")
     roster.extend(year_bills)
 
-    # Also check previous year if we're in the same biennium
-    prev_year = YEAR - 1
-    prev_bills = get_legislation_list_by_year(prev_year)
-    logger.info(f"GetLegislationByYear({prev_year}): {len(prev_bills)} bills")
-    roster.extend(prev_bills)
+    # Also check previous year, but only within the same biennium. A new
+    # biennium has no carryovers, and the prior year's roster would be
+    # looked up under the wrong biennium and fail (ADO #3073).
+    prior_biennium = SESSION.get("priorSession", {}).get("biennium")
+    if prior_biennium == BIENNIUM:
+        prev_year = YEAR - 1
+        prev_bills = get_legislation_list_by_year(prev_year)
+        logger.info(f"GetLegislationByYear({prev_year}): {len(prev_bills)} bills")
+        roster.extend(prev_bills)
+    else:
+        logger.info(f"New biennium ({BIENNIUM}) -- skipping prior-year roster")
 
     # Prefiled legislation
     prefiled = get_prefiled_legislation()
@@ -275,7 +282,8 @@ def run_incremental():
             if errors > 50:
                 logger.error("Too many consecutive errors — aborting")
                 create_sync_log(len(existing_bills), "error: too many API failures")
-                return
+                # Nonzero exit so the workflow fails instead of staying green
+                sys.exit(1)
 
     logger.info(f"Tier 1 complete: {len(updated_bills)} new bills fetched")
 
