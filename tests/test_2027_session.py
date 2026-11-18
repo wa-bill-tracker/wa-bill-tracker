@@ -71,3 +71,45 @@ class Test2027SessionRollover(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Test2027CutoffCalendar(unittest.TestCase):
+    """2027 draft cutoff calendar (leg.wa.gov, tentative until both chambers
+    adopt it). Source: docs/status/agentdocs/2026-11-17-2027-prefiling-research-report.md
+    """
+
+    EXPECTED = [
+        ("2027-02-19", "Policy Committee (Origin)"),
+        ("2027-02-26", "Fiscal Committee (Origin)"),
+        ("2027-03-10", "House of Origin"),
+        ("2027-03-31", "Policy Committee (Opposite)"),
+        ("2027-04-06", "Fiscal Committee (Opposite)"),
+        ("2027-04-14", "Opposite House"),
+        ("2027-04-25", "Sine Die"),
+    ]
+
+    def setUp(self):
+        session_path = PROJECT_ROOT / "data" / "session.json"
+        self.session = json.loads(session_path.read_text())
+
+    def test_session_end_is_sine_die_april_25(self):
+        # Day 105 counting Jan 11 as day 1; official draft agrees.
+        self.assertEqual(self.session["sessionEnd"], "2027-04-25")
+
+    def test_cutoff_dates_match_draft_calendar(self):
+        actual = [(c["date"], c["label"]) for c in self.session["cutoffDates"]]
+        self.assertEqual(actual, self.EXPECTED)
+
+    def test_last_cutoff_equals_session_end(self):
+        self.assertEqual(
+            self.session["cutoffDates"][-1]["date"], self.session["sessionEnd"]
+        )
+
+    def test_fails_before_stages_accumulate(self):
+        # Each cutoff must fail at least every stage the previous one did.
+        prev = set()
+        for c in self.session["cutoffDates"]:
+            stages = set(c["failsBefore"])
+            self.assertTrue(prev <= stages, f"{c['label']} drops stages {prev - stages}")
+            self.assertIn("prefiled", stages)
+            prev = stages
