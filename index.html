@@ -55,6 +55,8 @@
             <a href="#hjm" class="nav-tab" data-type="HJM">House Joint Memorials</a>
             <a href="#scr" class="nav-tab" data-type="SCR">Senate Concurrent Resolutions</a>
             <a href="#hcr" class="nav-tab" data-type="HCR">House Concurrent Resolutions</a>
+            <!-- Prior-session archive (ADO #3118): label, href and visibility are set from session.json priorSession by js/app.js -->
+            <a href="#archive" class="nav-tab nav-tab-archive" id="archiveNavLink" hidden>Passed last session</a>
         </nav>
     </header>
 
@@ -213,6 +215,12 @@
                     <div id="cutoffFailedBills"></div>
                 </div>
             </div>
+        </div>
+
+        <!-- Prior-session archive view (ADO #3118): read-only, built from data/archive/ -->
+        <div id="archiveView" class="view-container">
+            <p class="archive-status" id="archiveStatus" role="status"></p>
+            <ul class="archive-list" id="archiveCards"></ul>
         </div>
 
         <!-- Stats Detail View -->

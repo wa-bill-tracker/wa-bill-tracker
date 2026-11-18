@@ -23,6 +23,13 @@ export function sanitizeInput(str, maxLength = 2000) {
     return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').substring(0, maxLength);
 }
 
+// Parse a YYYY-MM-DD string as a local calendar date. new Date('YYYY-MM-DD')
+// is UTC midnight and renders as the previous day in US time zones.
+export function parseLocalDate(dateStr) {
+    const [y, m, d] = String(dateStr).split('-').map(Number);
+    return new Date(y, m - 1, d);
+}
+
 // Application configuration -- populated by loadConfig()
 export let APP_CONFIG = null;
 
@@ -71,6 +78,7 @@ export async function loadConfig() {
         // Single off-switch for the development banner (ADO #3117): set
         // "developmentBanner" to false in data/session.json at cutover.
         developmentBanner: session.developmentBanner === true,
+        prefilingOpens: session.prefilingOpens || null,
         priorSession: session.priorSession || {},
         billTypes: typesWithYear
     };

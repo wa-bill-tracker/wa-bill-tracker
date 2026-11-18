@@ -1,6 +1,6 @@
 // render.js -- UI rendering, stats, bill cards, and progress tracking
 
-import { APP_CONFIG, escapeHTML } from './config.js';
+import { APP_CONFIG, escapeHTML, parseLocalDate } from './config.js';
 import { APP_STATE, CookieManager } from './state.js';
 import { filterBills, getBillCutoffStatus, getNextCutoff } from './data.js';
 
@@ -18,6 +18,7 @@ export const STATUS_LABELS = {
     'governor': 'Governor',
     'enacted': 'Enacted',
     'vetoed': 'Vetoed',
+    'partial_veto': 'Partial Veto',
     'failed': 'Failed'
 };
 
@@ -39,6 +40,42 @@ export function updateUI() {
     document.dispatchEvent(new CustomEvent('ui-updated'));
 }
 
+// --- Empty state: no bills exist yet for this biennium (ADO #3118) ---
+// Text is built from session.json (prefilingOpens, sessionStart, year,
+// priorSession) so nothing here is tied to a particular year.
+export function buildEmptyState() {
+    const longDate = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
+    const plainDate = { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' };
+    const year = APP_CONFIG.year;
+    const sessionStart = APP_CONFIG.sessionStart.toLocaleDateString('en-US', plainDate);
+
+    let sentences = '';
+    if (APP_CONFIG.prefilingOpens) {
+        const opens = parseLocalDate(APP_CONFIG.prefilingOpens);
+        const opensText = opens.toLocaleDateString('en-US', longDate);
+        const today = new Date();
+        const opened = new Date(today.getFullYear(), today.getMonth(), today.getDate()) >= opens;
+        sentences += opened
+            ? `Prefiling opened ${escapeHTML(opensText)}. `
+            : `Prefiling opens ${escapeHTML(opensText)}. `;
+    }
+    sentences += `The ${escapeHTML(String(year))} session convenes ${escapeHTML(sessionStart)}. ` +
+        'Bills will appear here as they are filed.';
+
+    const prior = APP_CONFIG.priorSession?.year;
+    const priorLink = prior
+        ? `<p>Looking for last session? See <a href="#passed-${escapeHTML(String(prior))}">Passed in ${escapeHTML(String(prior))}</a>.</p>`
+        : '';
+
+    return `
+        <section class="empty-state" id="emptyState" aria-labelledby="emptyStateTitle">
+            <h3 id="emptyStateTitle">No ${escapeHTML(String(year))} bills yet</h3>
+            <p>${sentences}</p>
+            ${priorLink}
+        </section>
+    `;
+}
+
 // --- Bill list rendering ---
 export function renderBills(filteredBills) {
     const grid = document.getElementById('billsGrid');
@@ -49,7 +86,9 @@ export function renderBills(filteredBills) {
     APP_STATE.pagination.page = 1;
 
     if (filteredBills.length === 0) {
-        grid.innerHTML = `
+        grid.innerHTML = APP_STATE.bills.length === 0
+            ? buildEmptyState()
+            : `
             <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">
                 <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">No bills found</h3>
                 <p>Try adjusting your filters or search terms</p>

@@ -1,5 +1,5 @@
 // @ts-check
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('../support/fixture-test');
 
 /**
  * Pagination tests -- verify the app paginates bill cards correctly.

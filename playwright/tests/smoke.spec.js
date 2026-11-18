@@ -1,5 +1,5 @@
 // @ts-check
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('../support/fixture-test');
 
 /**
  * Smoke tests -- verify the page loads, renders bill data, and has no errors.

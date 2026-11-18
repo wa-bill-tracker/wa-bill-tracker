@@ -1,5 +1,5 @@
 // @ts-check
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('../support/fixture-test');
 
 /**
  * Filter tests -- verify search, status filters, bill type nav, and clear behavior.

@@ -47,6 +47,8 @@ test.describe('Development banner (ADO #3117)', () => {
   test('stays at the top of every view (main, stats detail, passed section)', async ({ page }) => {
     await page.goto('/');
     await expect(banner(page)).toBeVisible();
+    // Wait for app init: stat-card handlers are wired after config and data load.
+    await expect(page.locator('#daysLeftLabel')).toHaveText('Days Until Session');
     await page.locator('#daysLeft').click();
     await expect(page.locator('#statsView')).toHaveClass(/active/);
     await expect(banner(page)).toBeVisible();

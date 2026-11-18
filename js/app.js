@@ -4,6 +4,7 @@ import { loadConfig, debounce, escapeHTML, sanitizeInput, APP_CONFIG } from './c
 import { APP_STATE, CookieManager, StorageManager, DomainMigration, setStoragePrefix, getStorageKey, syncFilterTagUI } from './state.js';
 import { loadBillData, populateCommitteeFilters, filterBills, getBillCutoffStatus, getNextCutoff } from './data.js';
 import { updateUI, renderBills, setupInfiniteScroll, updateStats, renderSessionStats, showStatsDetail, createBillCard, STATUS_LABELS, getBillStageIndex, goToPage } from './render.js';
+import { hasArchive, archiveHash, archiveLabel, renderArchive } from './archive.js';
 import { toggleTrack, openNoteModal, closeNoteModal, saveNote, shareBill, shareNote, checkForSharedBill, highlightBill, updateUserPanel, updateUserNotesList, exportNotesCSV, importNotesCSV, emailAllNotes, updateSyncStatus, deleteOneNote, deleteAllNotes, copyAllNotes, setShowToast } from './notes.js';
 
 // --- Initialize Application ---
@@ -46,6 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     setupDevBanner();
+    setupArchiveNav();
 
     // Load bill data
     await loadBillsData();
@@ -180,13 +182,65 @@ function changeUserName() {
 function setupNavigationListeners() {
     window.addEventListener('hashchange', handleHashChange);
 
-    document.querySelectorAll('.nav-tab').forEach(tab => {
+    document.querySelectorAll('.nav-tab[data-type]').forEach(tab => {
         tab.addEventListener('click', (e) => {
             e.preventDefault();
             const type = tab.dataset.type;
             navigateToBillType(type);
         });
     });
+
+    const archiveLink = document.getElementById('archiveNavLink');
+    if (archiveLink) {
+        archiveLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showArchive();
+        });
+    }
+}
+
+// --- Prior-session archive nav (ADO #3118) ---
+// Label, href and visibility come from session.json priorSession.
+function setupArchiveNav() {
+    const link = document.getElementById('archiveNavLink');
+    if (!link) return;
+    if (!hasArchive()) {
+        link.hidden = true;
+        return;
+    }
+    link.textContent = archiveLabel();
+    link.setAttribute('href', '#' + archiveHash());
+    link.hidden = false;
+}
+
+function setCurrentNav(activeEl) {
+    document.querySelectorAll('.bill-type-nav .nav-tab').forEach(tab => {
+        const isActive = tab === activeEl;
+        tab.classList.toggle('active', isActive);
+        if (isActive) {
+            tab.setAttribute('aria-current', 'page');
+        } else {
+            tab.removeAttribute('aria-current');
+        }
+    });
+}
+
+async function showArchive() {
+    if (!hasArchive()) return;
+    APP_STATE.currentView = 'archive';
+    APP_STATE.currentBillType = null;
+    document.getElementById('mainView').classList.remove('active');
+    document.getElementById('statsView').classList.remove('active');
+    document.getElementById('archiveView').classList.add('active');
+    setCurrentNav(document.getElementById('archiveNavLink'));
+    document.getElementById('pageTitle').textContent = archiveLabel();
+    document.getElementById('pageDescription').textContent = '';
+
+    const newHash = archiveHash();
+    if (window.location.hash.slice(1) !== newHash) {
+        window.location.hash = newHash;
+    }
+    await renderArchive();
 }
 
 function handleHashChange() {
@@ -197,6 +251,11 @@ function handleHashChange() {
         setTimeout(() => {
             _highlightBill(billId);
         }, 1000);
+        return;
+    }
+
+    if (hasArchive() && hash === archiveHash()) {
+        showArchive();
         return;
     }
 
@@ -227,16 +286,13 @@ function navigateToBillType(type) {
 
     APP_STATE.currentView = 'main';
     document.getElementById('statsView').classList.remove('active');
+    document.getElementById('archiveView').classList.remove('active');
     document.getElementById('mainView').classList.add('active');
 
-    document.querySelectorAll('.nav-tab').forEach(tab => {
+    setCurrentNav(Array.from(document.querySelectorAll('.nav-tab[data-type]')).find(tab => {
         const tabType = tab.dataset.type.toLowerCase() === 'all' ? 'all' : tab.dataset.type.toUpperCase();
-        if (tabType === type) {
-            tab.classList.add('active');
-        } else {
-            tab.classList.remove('active');
-        }
-    });
+        return tabType === type;
+    }));
 
     const typeInfo = APP_CONFIG.billTypes[type];
     document.getElementById('pageTitle').textContent = typeInfo.name;
