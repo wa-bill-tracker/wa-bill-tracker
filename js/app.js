@@ -213,6 +213,23 @@ function setupArchiveNav() {
     link.hidden = false;
 }
 
+// The nav scrolls sideways; keep the active tab on screen (ADO #3118). Moves
+// the nav's own scrollLeft only when the tab is clipped. element.scrollIntoView
+// is avoided on purpose: Chromium treats it as the new starting point for Tab,
+// which broke "first Tab reaches the banner dismiss button".
+function scrollNavTabIntoView(tab) {
+    const nav = tab && tab.parentElement;
+    if (!nav || nav.scrollWidth <= nav.clientWidth) return;
+    const pad = 16;
+    const navBox = nav.getBoundingClientRect();
+    const tabBox = tab.getBoundingClientRect();
+    if (tabBox.right > navBox.right - pad) {
+        nav.scrollLeft += tabBox.right - navBox.right + pad;
+    } else if (tabBox.left < navBox.left + pad) {
+        nav.scrollLeft -= navBox.left - tabBox.left + pad;
+    }
+}
+
 function setCurrentNav(activeEl) {
     document.querySelectorAll('.bill-type-nav .nav-tab').forEach(tab => {
         const isActive = tab === activeEl;
@@ -223,6 +240,7 @@ function setCurrentNav(activeEl) {
             tab.removeAttribute('aria-current');
         }
     });
+    scrollNavTabIntoView(activeEl);
 }
 
 async function showArchive() {

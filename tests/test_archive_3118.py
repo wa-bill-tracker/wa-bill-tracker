@@ -61,5 +61,16 @@ class TestNoHardcodedYearsInNewJs(unittest.TestCase):
         self.assertNotRegex(path.read_text(), r"\b20\d\d\b")
 
 
+class TestArchiveLabelUsesBiennium(unittest.TestCase):
+    def test_label_and_hash_derive_from_biennium(self):
+        src = (ROOT / "js" / "archive.js").read_text()
+        self.assertIn("prior.biennium", src)
+        self.assertIn("Passed in ${priorPeriod()}", src)
+        self.assertIn("passed-${priorPeriod()}", src)
+
+    def test_session_has_prior_biennium(self):
+        self.assertRegex(SESSION["priorSession"]["biennium"], r"^\d{4}-\d{2}$")
+
+
 if __name__ == "__main__":
     unittest.main()

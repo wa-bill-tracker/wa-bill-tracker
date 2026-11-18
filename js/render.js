@@ -62,7 +62,7 @@ export function buildEmptyState() {
     sentences += `The ${escapeHTML(String(year))} session convenes ${escapeHTML(sessionStart)}. ` +
         'Bills will appear here as they are filed.';
 
-    const prior = APP_CONFIG.priorSession?.year;
+    const prior = APP_CONFIG.priorSession?.biennium || APP_CONFIG.priorSession?.year;
     const priorLink = prior
         ? `<p>Looking for last session? See <a href="#passed-${escapeHTML(String(prior))}">Passed in ${escapeHTML(String(prior))}</a>.</p>`
         : '';

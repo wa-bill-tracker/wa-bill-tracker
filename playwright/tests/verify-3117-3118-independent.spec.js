@@ -84,7 +84,7 @@ test.describe('users 2026 data preserved', () => {
       document.cookie = `wa_tracker_2027_notes=${encodeURIComponent('{"HB9901":[{"text":"stale note"}]}')};path=/`;
       return localStorage.getItem('wa_tracker_2026_state');
     });
-    await page.goto('/#passed-2026');
+    await page.goto('/#passed-2025-26');
     await expect(page.locator('#archiveCards > li').first()).toBeVisible();
     await page.locator('#devBannerDismiss').click();
     await page.goto('/');
@@ -129,7 +129,7 @@ test.describe('screenshots and keyboard/a11y spot checks', () => {
         await page.goto('/');
         await ready(page);
         await page.screenshot({ path: `${SHOTS}/${browserName}-${w}-${scheme}-banner-empty.png` });
-        await page.goto('/#passed-2026');
+        await page.goto('/#passed-2025-26');
         await expect(page.locator('#archiveCards > li').first()).toBeVisible();
         await page.screenshot({ path: `${SHOTS}/${browserName}-${w}-${scheme}-passed2026.png` });
       });
@@ -159,7 +159,7 @@ test.describe('screenshots and keyboard/a11y spot checks', () => {
     await page.goto('/');
     await ready(page);
     await page.locator('#devBannerDismiss').click();
-    await page.goto('/#passed-2026');
+    await page.goto('/#passed-2025-26');
     await expect(page.locator('#archiveNavLink')).toHaveAttribute('aria-current', 'page');
     await expect(page.locator('[aria-current="page"]')).toHaveCount(1);
   });

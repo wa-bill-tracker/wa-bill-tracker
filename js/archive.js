@@ -1,7 +1,8 @@
-// archive.js -- "Passed in <prior year>" section (ADO #3118)
+// archive.js -- "Passed in <prior biennium>" section (ADO #3118)
 //
 // Read-only list of bills enacted in the prior biennium, built from
-// data/archive/<priorSession.year>-bills.json. It is deliberately separate
+// data/archive/<priorSession.year>-bills.json. The archive file covers the
+// whole biennium, so the label and hash use priorSession.biennium. It is deliberately separate
 // from APP_STATE.bills so archive bills never reach the current-session
 // filters, counts, cutoff logic, or tracked/notes storage. The label, hash
 // and file path all derive from session.json (APP_CONFIG.priorSession).
@@ -18,12 +19,18 @@ export function hasArchive() {
     return Boolean(APP_CONFIG && APP_CONFIG.priorSession && APP_CONFIG.priorSession.year);
 }
 
+// Falls back to the year if session.json has no biennium for the prior session.
+function priorPeriod() {
+    const prior = APP_CONFIG.priorSession;
+    return prior.biennium || String(prior.year);
+}
+
 export function archiveHash() {
-    return `passed-${APP_CONFIG.priorSession.year}`;
+    return `passed-${priorPeriod()}`;
 }
 
 export function archiveLabel() {
-    return `Passed in ${APP_CONFIG.priorSession.year}`;
+    return `Passed in ${priorPeriod()}`;
 }
 
 export function archivePath() {
@@ -85,9 +92,10 @@ export async function renderArchive() {
     try {
         const bills = await loadArchive();
         const prior = APP_CONFIG.priorSession;
-        const summary = `${bills.length} bill${bills.length === 1 ? '' : 's'} became law in the ${prior.biennium} biennium.`;
-        status.textContent = summary;
-        description.textContent = `${summary} These are archived and are not part of ${APP_CONFIG.year} counts, filters, or cutoffs.`;
+        // The count sentence lives only in the status line (role=status), so it
+        // is shown and announced once; the description carries the caveat.
+        status.textContent = `${bills.length} bill${bills.length === 1 ? '' : 's'} became law in the ${prior.biennium} biennium.`;
+        description.textContent = `These are archived and are not part of ${APP_CONFIG.year} counts, filters, or cutoffs.`;
         list.innerHTML = bills.map(createArchiveCard).join('');
         return bills.length;
     } catch (error) {

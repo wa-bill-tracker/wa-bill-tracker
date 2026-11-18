@@ -53,8 +53,8 @@ test.describe('Empty state with stale 2025-26 bills.json', () => {
     await appReady(page);
     await expect(emptyState(page).getByRole('heading', { level: 3 })).toBeVisible();
     await expect(emptyState(page)).not.toHaveAttribute('role', 'alert');
-    const link = emptyState(page).getByRole('link', { name: /passed in 2026/i });
-    await expect(link).toHaveAttribute('href', '#passed-2026');
+    const link = emptyState(page).getByRole('link', { name: /passed in 2025-26/i });
+    await expect(link).toHaveAttribute('href', '#passed-2025-26');
   });
 
   test('has no axe violations in the empty state', async ({ page }) => {
