@@ -131,6 +131,19 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for Cloudflare SSL settings and tro
 
 ---
 
+## Session-driven site behavior
+
+Everything below is read from `data/session.json`, with no hardcoded years in the code:
+
+| Key | Effect |
+|---|---|
+| `developmentBanner` | `true` shows the dismissible "We're upgrading" banner (ADO #3117). **Set to `false` at cutover to remove it.** The copy lives in `index.html` (`#devBanner`). Dismissal is remembered per session year, in a cookie and in localStorage. |
+| `biennium` | The app shows only bills whose `biennium` matches. Other-biennium bills in `data/bills.json` (or in the browser cache) are ignored. |
+| `prefilingOpens` | Date used by the "no bills yet" empty state. |
+| `priorSession.year`, `priorSession.biennium` | Adds a "Passed in <biennium>" section (for example "Passed in 2025-26") to the main navigation. The label and `#passed-<biennium>` link come from `biennium`; the bills come from `data/archive/<year>-bills.json` (enacted and partial-veto bills only), which covers the whole biennium. It is separate from the current-session counts, filters and cutoffs. |
+
+---
+
 ## Adapting for Other States
 
 This app can be adapted for any state with a public legislative API:

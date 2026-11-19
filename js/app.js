@@ -4,6 +4,7 @@ import { loadConfig, debounce, escapeHTML, sanitizeInput, APP_CONFIG } from './c
 import { APP_STATE, CookieManager, StorageManager, DomainMigration, setStoragePrefix, getStorageKey, syncFilterTagUI } from './state.js';
 import { loadBillData, populateCommitteeFilters, filterBills, getBillCutoffStatus, getNextCutoff } from './data.js';
 import { updateUI, renderBills, setupInfiniteScroll, updateStats, renderSessionStats, showStatsDetail, createBillCard, STATUS_LABELS, getBillStageIndex, goToPage } from './render.js';
+import { hasArchive, archiveHash, archiveLabel, renderArchive } from './archive.js';
 import { toggleTrack, openNoteModal, closeNoteModal, saveNote, shareBill, shareNote, checkForSharedBill, highlightBill, updateUserPanel, updateUserNotesList, exportNotesCSV, importNotesCSV, emailAllNotes, updateSyncStatus, deleteOneNote, deleteAllNotes, copyAllNotes, setShowToast } from './notes.js';
 
 // --- Initialize Application ---
@@ -45,6 +46,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         footerYear.textContent = config.siteName;
     }
 
+    setupDevBanner();
+    setupArchiveNav();
+
     // Load bill data
     await loadBillsData();
 
@@ -80,6 +84,56 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     _checkForSharedBill();
 });
+
+// --- Development banner (ADO #3117) ---
+// Shown only while APP_CONFIG.developmentBanner (session.json) is true and the
+// visitor has not dismissed it. Dismissal is stored per session year.
+//
+// Dismissal is kept in both a cookie and localStorage under the same key.
+// WebKit rejects Secure cookies on http://localhost, so the cookie alone would
+// not persist there; either copy counts as dismissed.
+function isBannerDismissed(key) {
+    if (String(CookieManager.get(key)) === '1') return true;
+    try {
+        return localStorage.getItem(key) === '1';
+    } catch (e) {
+        return false;
+    }
+}
+
+function rememberBannerDismissed(key) {
+    CookieManager.set(key, '1', 365);
+    try {
+        localStorage.setItem(key, '1');
+    } catch (e) {
+        console.warn('Could not store banner dismissal in localStorage:', e);
+    }
+}
+
+function setupDevBanner() {
+    const banner = document.getElementById('devBanner');
+    const dismissBtn = document.getElementById('devBannerDismiss');
+    if (!banner || !dismissBtn) return;
+
+    const key = getStorageKey('dev_banner_dismissed');
+    if (!APP_CONFIG.developmentBanner || isBannerDismissed(key)) {
+        banner.hidden = true;
+        return;
+    }
+
+    banner.hidden = false;
+    dismissBtn.addEventListener('click', () => {
+        banner.hidden = true;
+        rememberBannerDismissed(key);
+        // The banner (and the button that had focus) is gone; move focus to
+        // the page title so keyboard and screen reader users keep their place.
+        const title = document.getElementById('siteTitle');
+        if (title) {
+            title.setAttribute('tabindex', '-1');
+            title.focus();
+        }
+    });
+}
 
 // --- Wrapper for loadBillData that passes showToast and calls post-load hooks ---
 async function loadBillsData() {
@@ -150,13 +204,83 @@ function changeUserName() {
 function setupNavigationListeners() {
     window.addEventListener('hashchange', handleHashChange);
 
-    document.querySelectorAll('.nav-tab').forEach(tab => {
+    document.querySelectorAll('.nav-tab[data-type]').forEach(tab => {
         tab.addEventListener('click', (e) => {
             e.preventDefault();
             const type = tab.dataset.type;
             navigateToBillType(type);
         });
     });
+
+    const archiveLink = document.getElementById('archiveNavLink');
+    if (archiveLink) {
+        archiveLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showArchive();
+        });
+    }
+}
+
+// --- Prior-session archive nav (ADO #3118) ---
+// Label, href and visibility come from session.json priorSession.
+function setupArchiveNav() {
+    const link = document.getElementById('archiveNavLink');
+    if (!link) return;
+    if (!hasArchive()) {
+        link.hidden = true;
+        return;
+    }
+    link.textContent = archiveLabel();
+    link.setAttribute('href', '#' + archiveHash());
+    link.hidden = false;
+}
+
+// The nav scrolls sideways; keep the active tab on screen (ADO #3118). Moves
+// the nav's own scrollLeft only when the tab is clipped. element.scrollIntoView
+// is avoided on purpose: Chromium treats it as the new starting point for Tab,
+// which broke "first Tab reaches the banner dismiss button".
+function scrollNavTabIntoView(tab) {
+    const nav = tab && tab.parentElement;
+    if (!nav || nav.scrollWidth <= nav.clientWidth) return;
+    const pad = 16;
+    const navBox = nav.getBoundingClientRect();
+    const tabBox = tab.getBoundingClientRect();
+    if (tabBox.right > navBox.right - pad) {
+        nav.scrollLeft += tabBox.right - navBox.right + pad;
+    } else if (tabBox.left < navBox.left + pad) {
+        nav.scrollLeft -= navBox.left - tabBox.left + pad;
+    }
+}
+
+function setCurrentNav(activeEl) {
+    document.querySelectorAll('.bill-type-nav .nav-tab').forEach(tab => {
+        const isActive = tab === activeEl;
+        tab.classList.toggle('active', isActive);
+        if (isActive) {
+            tab.setAttribute('aria-current', 'page');
+        } else {
+            tab.removeAttribute('aria-current');
+        }
+    });
+    scrollNavTabIntoView(activeEl);
+}
+
+async function showArchive() {
+    if (!hasArchive()) return;
+    APP_STATE.currentView = 'archive';
+    APP_STATE.currentBillType = null;
+    document.getElementById('mainView').classList.remove('active');
+    document.getElementById('statsView').classList.remove('active');
+    document.getElementById('archiveView').classList.add('active');
+    setCurrentNav(document.getElementById('archiveNavLink'));
+    document.getElementById('pageTitle').textContent = archiveLabel();
+    document.getElementById('pageDescription').textContent = '';
+
+    const newHash = archiveHash();
+    if (window.location.hash.slice(1) !== newHash) {
+        window.location.hash = newHash;
+    }
+    await renderArchive();
 }
 
 function handleHashChange() {
@@ -167,6 +291,11 @@ function handleHashChange() {
         setTimeout(() => {
             _highlightBill(billId);
         }, 1000);
+        return;
+    }
+
+    if (hasArchive() && hash === archiveHash()) {
+        showArchive();
         return;
     }
 
@@ -197,16 +326,13 @@ function navigateToBillType(type) {
 
     APP_STATE.currentView = 'main';
     document.getElementById('statsView').classList.remove('active');
+    document.getElementById('archiveView').classList.remove('active');
     document.getElementById('mainView').classList.add('active');
 
-    document.querySelectorAll('.nav-tab').forEach(tab => {
+    setCurrentNav(Array.from(document.querySelectorAll('.nav-tab[data-type]')).find(tab => {
         const tabType = tab.dataset.type.toLowerCase() === 'all' ? 'all' : tab.dataset.type.toUpperCase();
-        if (tabType === type) {
-            tab.classList.add('active');
-        } else {
-            tab.classList.remove('active');
-        }
-    });
+        return tabType === type;
+    }));
 
     const typeInfo = APP_CONFIG.billTypes[type];
     document.getElementById('pageTitle').textContent = typeInfo.name;

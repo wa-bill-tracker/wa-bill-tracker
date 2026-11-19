@@ -1,5 +1,5 @@
 // @ts-check
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('../support/fixture-test');
 
 /**
  * Vote tracker tests -- verify that bills which have passed the legislature

@@ -3,6 +3,34 @@
 import { APP_CONFIG, escapeHTML } from './config.js';
 import { APP_STATE, StorageManager } from './state.js';
 
+// Keep only bills from the configured biennium (session.json). data/bills.json
+// can still hold the previous biennium until the first fetch of a new one
+// replaces it (ADO #3118). Bills with no biennium are excluded too: the fetch
+// pipeline always stamps one, so a missing value means untrusted data.
+export function filterToBiennium(bills, biennium) {
+    if (!biennium) return bills;
+    return bills.filter(bill => bill.biennium === biennium);
+}
+
+// Derive display fields for each bill and drop other-biennium bills.
+function prepareBills(rawBills) {
+    return filterToBiennium(rawBills, APP_CONFIG.biennium).map(bill => ({
+        ...bill,
+        committee: bill.committee ||
+            (bill.hearings && bill.hearings.length > 0
+                ? bill.hearings[bill.hearings.length - 1].committee
+                : ''),
+        _searchText: [bill.number, bill.title, bill.description, bill.sponsor].join(' ').toLowerCase()
+    }));
+}
+
+function loadedMessage(count, rawCount) {
+    if (count > 0) return `Loaded ${count} bills`;
+    return rawCount > 0
+        ? `No ${APP_CONFIG.year} bills yet`
+        : 'No bill data available';
+}
+
 // Load Bills Data
 export async function loadBillData(showToast) {
     try {
@@ -12,28 +40,23 @@ export async function loadBillData(showToast) {
 
         if (response.ok) {
             const data = await response.json();
-            const bills = data.bills || [];
+            const rawBills = data.bills || [];
 
             // Validate fetched data before using it
-            if (bills.length === 0) {
+            if (rawBills.length === 0) {
                 throw new Error('Fetched data contains no bills');
             }
 
-            APP_STATE.bills = bills.map(bill => ({
-                ...bill,
-                committee: bill.committee ||
-                    (bill.hearings && bill.hearings.length > 0
-                        ? bill.hearings[bill.hearings.length - 1].committee
-                        : ''),
-                _searchText: [bill.number, bill.title, bill.description, bill.sponsor].join(' ').toLowerCase()
-            }));
+            // An all-other-biennium file is valid data: it just yields zero
+            // bills for this session, and the UI shows the empty state.
+            APP_STATE.bills = prepareBills(rawBills);
             APP_STATE.lastSync = data.lastSync || new Date().toISOString();
 
             // Cache validated data in localStorage
             localStorage.setItem('billsData', JSON.stringify(data));
             localStorage.setItem('lastDataFetch', new Date().toISOString());
 
-            showToast(`Loaded ${APP_STATE.bills.length} bills`);
+            showToast(loadedMessage(APP_STATE.bills.length, rawBills.length));
         } else {
             throw new Error('Failed to fetch from GitHub');
         }
@@ -47,14 +70,8 @@ export async function loadBillData(showToast) {
             const cachedBills = data.bills || [];
 
             if (cachedBills.length > 0) {
-                APP_STATE.bills = cachedBills.map(bill => ({
-                    ...bill,
-                    committee: bill.committee ||
-                        (bill.hearings && bill.hearings.length > 0
-                            ? bill.hearings[bill.hearings.length - 1].committee
-                            : ''),
-                    _searchText: [bill.number, bill.title, bill.description, bill.sponsor].join(' ').toLowerCase()
-                }));
+                // The cache may predate the biennium rollover: filter it too.
+                APP_STATE.bills = prepareBills(cachedBills);
                 APP_STATE.lastSync = data.lastSync || null;
                 showToast('Using cached data');
             } else {

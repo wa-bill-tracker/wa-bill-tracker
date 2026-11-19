@@ -213,7 +213,8 @@ h1 {
 .nav-tab.active {
     background: var(--accent);
     border-color: var(--accent);
-    color: white;
+    /* Navy on the light-green accent (~7:1). White on this accent was ~2:1. */
+    color: var(--c6s-navy);
 }
 
 /* Page Title */
@@ -2058,4 +2059,178 @@ footer a:hover {
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   Development banner (ADO #3117)
+   Cream surface with navy text (contrast ~12:1). Dismiss target is 44x44.
+   No motion, so nothing to disable for prefers-reduced-motion.
+   ========================================================================== */
+.dev-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem 0.75rem 2rem;
+    background: var(--c6s-white);
+    color: var(--c6s-navy);
+    border-bottom: 4px solid var(--c6s-accent-bg);
+    animation: none;
+    transition: none;
+}
+
+.dev-banner[hidden] {
+    display: none;
+}
+
+.dev-banner-text {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.dev-banner-dismiss {
+    flex: 0 0 auto;
+    min-width: 44px;
+    min-height: 44px;
+    background: transparent;
+    color: var(--c6s-navy);
+    border: 2px solid var(--c6s-navy);
+    border-radius: 8px;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.dev-banner-dismiss:hover {
+    background: var(--c6s-navy);
+    color: var(--c6s-white);
+}
+
+.dev-banner-dismiss:focus-visible {
+    outline: 3px solid var(--c6s-navy);
+    outline-offset: 2px;
+}
+
+/* Dark header surface: use the light token so the ring is visible. */
+.nav-tab:focus-visible {
+    outline: 3px solid var(--c6s-white);
+    outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+    .dev-banner {
+        padding-left: 1rem;
+    }
+}
+
+/* ==========================================================================
+   Empty state and prior-session archive (ADO #3118)
+   ========================================================================== */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.nav-tab[hidden] {
+    display: none;
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: var(--text);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-heading);
+}
+
+.empty-state p + p {
+    margin-top: 0.75rem;
+}
+
+.empty-state a,
+.archive-card a {
+    color: var(--accent);
+}
+
+.empty-state a:focus-visible,
+.archive-card a:focus-visible {
+    outline: 3px solid var(--c6s-white);
+    outline-offset: 2px;
+}
+
+.archive-status {
+    margin-bottom: 1rem;
+    color: var(--text);
+}
+
+.archive-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+    gap: 1rem;
+}
+
+.archive-card {
+    height: 100%;
+    padding: 1rem 1.25rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow-wrap: anywhere;
+}
+
+.archive-card-title {
+    font-size: 1.05rem;
+    color: var(--text-heading);
+    margin-bottom: 0.5rem;
+}
+
+.archive-card-name {
+    display: block;
+    font-weight: 500;
+}
+
+.archive-card-desc,
+.archive-card-history {
+    font-size: 0.9rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.archive-card-history {
+    color: var(--text-muted);
+}
+
+.archive-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Opaque navy chip keeps the status text at AA contrast on the card surface. */
+.archive-card .tag.archive-status {
+    background: var(--c6s-navy);
+    color: var(--c6s-white);
+    border-color: var(--status-enacted);
 }

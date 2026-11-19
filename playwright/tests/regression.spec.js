@@ -1,5 +1,5 @@
 // @ts-check
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('../support/fixture-test');
 
 /**
  * Regression tests -- verify post-session behavior and governor-related display.
